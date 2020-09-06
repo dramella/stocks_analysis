@@ -8,3 +8,4 @@ plotly
 pandas
 datetime
 bs4
+gunicorn

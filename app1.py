@@ -66,3 +66,5 @@ def update_table(n_clicks,value):
 
 
 
+if __name__ == "__main__":
+    app.run()

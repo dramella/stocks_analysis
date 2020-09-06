@@ -64,7 +64,5 @@ def update_table(n_clicks,value):
         columns = [{"name": i, "id": i, } for i in (df.loc[0].to_dict())]
         return dash_table.DataTable(data=data, columns=columns)
 
-if __name__ == '__main__':
-    app.run_server()
 
 

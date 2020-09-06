@@ -32,4 +32,3 @@ def render_content(tab):
             html.H3('Tab content 2')
         ])
 
-

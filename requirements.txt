@@ -8,5 +8,5 @@ plotly
 pandas
 datetime
 bs4
-gunicorn
+gunicorn==19.9.0
 application

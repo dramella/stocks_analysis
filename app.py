@@ -1,16 +1,18 @@
-import dash
 import dash_table
 from dash.dependencies import Input, Output, State
 from dash_extensions import Download
 import dash_core_components as dcc
 import dash_html_components as html
 from dash_extensions.snippets import send_data_frame
-from lib import df_line_graph,yf_historical_data,summary_info
+from lib import df_line_graph,yf_historical_data,summary_info,overview,candlestick
 
+import dash
+import os
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__,suppress_callback_exceptions=True,external_stylesheets=external_stylesheets)
 server = app.server
 app.config.suppress_callback_exceptions = True
+server.secret_key = os.environ.get('secret_key', 'secret')
 
 app.layout = html.Div([
     html.H1('Stock Analysis Dashboard'),
@@ -20,7 +22,15 @@ app.layout = html.Div([
     html.Div(id='my-div'),
     dcc.Graph(id='output-graph',style={'display': 'none'}),
     html.Div([html.Button("Download Excel Data", id="btn",style={'display': 'none'}), Download(id="download")]),
-    html.Div([html.Div(id="table1")])])
+    html.Div(html.P(html.Br())),
+    html.Div([html.Div(id="table1")]),
+    html.Div(html.P(html.Br())),
+    dcc.Tabs(id='tabs-example', value='tab-1', children=[
+        dcc.Tab(label='Tab one', value='tab-1'),
+        dcc.Tab(label='Tab two', value='tab-2')],
+             style={'display': 'none'}),
+    dcc.Graph(id='tabs-example-content',style={'display': 'none'})
+])
 
 @app.callback(
     Output('output-graph', "figure"),
@@ -67,7 +77,34 @@ def update_table(n_clicks,value):
         columns = [{"name": i, "id": i, } for i in (df.loc[0].to_dict())]
         return dash_table.DataTable(data=data, columns=columns)
 
+
+@app.callback(
+    Output("tabs-example", "style"),
+    [Input("button", "n_clicks")])
+
+
+def show_tabs(n_clicks):
+    if n_clicks>=1:
+        return {'display': 'block'}
+
+@app.callback(Output('tabs-example-content', 'style'),
+              [Input("button", "n_clicks")])
+
+def show_tabs(n_clicks):
+    if n_clicks>=1:
+        return {'display': 'block'}
+
+@app.callback(Output('tabs-example-content', 'figure'),
+              [Input('tabs-example', 'value')],
+              [Input("my-id", "value")])
+
+def render_content(tab,ticker):
+    if tab == 'tab-1':
+        return candlestick(ticker)
+    elif tab == 'tab-2':
+        return candlestick('nexi.mi')
+
+
 if __name__ == '__main__':
     app.run_server()
-
 

@@ -1,6 +1,7 @@
 #libraries
 import requests
 import plotly.express as px
+import plotly.graph_objects as go
 import os
 import ssl
 import pandas as pd
@@ -18,6 +19,7 @@ def yf_historical_data(ticker,end_date=None, start_date=None,freq='Daily'):
     :param freq: frequency of quotes either daily weekly or monthly
     :return:
     """
+    #todo add currency
     #set default end date to today
     if end_date==None:
         end_date = datetime.utcnow()
@@ -72,7 +74,7 @@ def df_line_graph(df,y):
     if isinstance(df.index, pd.MultiIndex):
         df.reset_index(inplace=True)
     df_interpolated = df.interpolate(method='linear', order=2)
-    fig = px.line(df_interpolated, x='Date', y=f'{y}', title=f"{y} Time Series", color="Ticker")
+    fig = px.line(df_interpolated, x='Date', y=f'{y}', color="Ticker",title=f'Closing Price Historical Chart')
     fig.update_xaxes(rangeslider_visible=True,rangeselector=dict(buttons=list([
                 dict(count=1, label="1m", step="month", stepmode="backward"),
                 dict(count=6, label="6m", step="month", stepmode="backward"),
@@ -100,3 +102,44 @@ def summary_info(ticker):
         return df
     else:
         print('N/A')
+
+
+def overview(ticker):
+    df=yf_historical_data(ticker)
+    df.reset_index(inplace=True)
+    df_last_date_row=df.loc[df.Date == df.Date.max()]
+    keys_list = ["Date","Close", "Adjusted Close","Open","High","Low","Volume"]
+    date_day=df_last_date_row['Date'].to_string(index=False)
+    close=df_last_date_row['Close'].to_string(index=False)
+    adj_close=df_last_date_row['Adj Close'].to_string(index=False)
+    open=df_last_date_row['Open'].to_string(index=False)
+    high=df_last_date_row['High'].to_string(index=False)
+    low=df_last_date_row['Low'].to_string(index=False)
+    volume=df_last_date_row['Volume'].to_string(index=False)
+    values_list=[date_day,close,adj_close,open,high,low,volume]
+    overview_df = pd.DataFrame(list(zip(keys_list, values_list)))
+    overview_df = overview_df.rename(columns={0: "stats", 1: ""})
+    overview_df.set_index('stats',drop=True, inplace=True)
+    overview_df.index.name=None
+    return overview_df
+
+
+def candlestick(ticker):
+    df = yf_historical_data(ticker)
+    df.reset_index(inplace=True)
+    fig = go.Figure(data=[go.Candlestick(x=df['Date'],
+                                         open=df['Open'],
+                                         high=df['High'],
+                                         low=df['Low'],
+                                         close=df['Close'])])
+    fig.update_layout(title='Candlestick Chart')
+    return fig
+
+
+def ticker_returns(ticker):
+    df = yf_historical_data(ticker)
+    df.reset_index(inplace=True)
+    df=df[['Date','Close']]
+    df['daily_rets']=df['Close'].pct_change()
+    df.dropna(inplace=True)
+    df['cumulative_daily_rets']=(1 + df['daily_rets']).cumprod()
